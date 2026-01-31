@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>家庭教養風格測驗（32題）</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", Arial, sans-serif; margin: 0; background:#f6f7fb; color:#111; }
+    .wrap { max-width: 920px; margin: 24px auto; padding: 0 16px; }
+    .card { background:#fff; border-radius: 14px; padding: 18px 18px 16px; box-shadow: 0 8px 22px rgba(0,0,0,.06); }
+    h1 { font-size: 20px; margin: 0 0 10px; }
+    .muted { color:#666; font-size: 13px; line-height: 1.5; }
+    .row { display:flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .bar { height: 10px; background:#e9ecf5; border-radius: 999px; overflow:hidden; margin: 12px 0 14px; }
+    .bar > div { height: 100%; width: 0%; background:#3b82f6; }
+    .qno { font-weight: 700; font-size: 14px; color:#1f2937; }
+    .qtext { font-size: 18px; line-height: 1.5; margin: 10px 0 14px; }
+    .scale { display:grid; grid-template-columns: repeat(7, minmax(40px, 1fr)); gap: 10px; margin: 10px 0 6px; }
+    .opt { background:#fff; border: 1px solid #d7dbe8; border-radius: 12px; padding: 10px 8px; text-align:center; cursor:pointer; user-select:none; transition: .12s; }
+    .opt:hover { transform: translateY(-1px); }
+    .opt.selected { border-color:#3b82f6; outline: 3px solid rgba(59,130,246,.15); font-weight:700; }
+    .scale-labels { display:flex; justify-content: space-between; font-size: 12px; color:#666; margin-top: 6px; }
+    button { border:0; border-radius: 12px; padding: 10px 14px; cursor:pointer; font-weight: 700; }
+    .btn { background:#111; color:#fff; }
+    .btn:disabled { opacity:.45; cursor:not-allowed; }
+    .btn2 { background:#e9ecf5; }
+    .footer { display:flex; justify-content: space-between; align-items: center; margin-top: 14px; gap: 10px; flex-wrap: wrap; }
+    .pill { background:#f2f4fb; padding: 6px 10px; border-radius: 999px; font-size: 12px; color:#374151; }
+    .result h2 { margin: 0 0 10px; font-size: 18px; }
+    .grid { display:grid; grid-template-columns: 1fr; gap: 10px; }
+    @media (min-width: 860px) { .grid { grid-template-columns: 1fr 1fr; } }
+    table { width:100%; border-collapse: collapse; background:#fff; border-radius: 12px; overflow:hidden; }
+    th, td { padding: 10px 10px; border-bottom: 1px solid #eef1f8; text-align:left; font-size: 13px; }
+    th { background:#f6f7fb; font-size: 12px; color:#374151; }
+    .typebox { background:#fff; border-radius: 14px; padding: 14px; border:1px solid #eef1f8; }
+    .warn { color:#b45309; font-size: 12px; margin-top: 6px; }
+    .small { font-size: 12px; color:#6b7280; line-height: 1.55; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" id="screenStart">
+      <h1>家庭教養風格測驗（32題）</h1>
+      <div class="muted">
+        <p>請用 <b>1～7 分</b>作答（1=非常不同意，7=非常同意）。題目將被隨機排列，作答中不會顯示維度名稱。</p>
+        <p class="small">
+          四個面向各 8 題，總分範圍 8～56。等級：低（8～23）、中（24～40）、高（41～56）。<br/>
+          16 種家庭風格以「高/低」組合判定：若某面向落在「中」，程式仍會用 32 分作二分（≥32 視為高，<32 視為低），並在結果提示你該面向其實是「中」。
+        </p>
+      </div>
+      <div class="footer">
+        <button class="btn" id="btnStart">開始作答</button>
+        <span class="pill">共 32 題 · 約 4–7 分鐘</span>
+      </div>
+    </div>
+
+    <div class="card" id="screenQuiz" style="display:none;">
+      <div class="row" style="justify-content: space-between;">
+        <div class="qno" id="qNo">題目</div>
+        <div class="pill" id="pillProgress">1 / 32</div>
+      </div>
+      <div class="bar"><div id="barFill"></div></div>
+
+      <div class="qtext" id="qText"></div>
+
+      <div class="scale" id="scale"></div>
+      <div class="scale-labels">
+        <span>非常不同意</span>
+        <span>非常同意</span>
+      </div>
+
+      <div class="footer">
+        <div class="row">
+          <button class="btn2" id="btnPrev">上一題</button>
+          <button class="btn2" id="btnNext">下一題</button>
+        </div>
+        <button class="btn" id="btnSubmit" disabled>完成並看結果</button>
+      </div>
+
+      <div class="warn" id="warn" style="display:none;">請先選擇 1～7 分再前往下一題。</div>
+    </div>
+
+    <div class="card result" id="screenResult" style="display:none;">
+      <h2>你的測驗結果</h2>
+
+      <div class="grid">
+        <div>
+          <table>
+            <thead>
+              <tr>
+                <th>面向</th>
+                <th>總分（8～56）</th>
+                <th>等級（低/中/高）</th>
+              </tr>
+            </thead>
+            <tbody id="scoreRows"></tbody>
+          </table>
+          <div class="small" id="midNote" style="margin-top:10px;"></div>
+        </div>
+
+        <div class="typebox">
+          <div class="pill" id="typeKey" style="display:inline-block; margin-bottom: 10px;"></div>
+          <h2 style="margin-top:6px;" id="typeName"></h2>
+          <div class="muted" id="typeDesc"></div>
+        </div>
+      </div>
+
+      <div class="footer" style="margin-top: 16px;">
+        <button class="btn2" id="btnRestart">重新測一次（重新洗牌）</button>
+        <button class="btn" id="btnCopy">複製結果文字</button>
+      </div>
+
+      <pre id="copyText" style="display:none;"></pre>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // ===== 1) 題庫：不在畫面顯示維度，但程式內部保留 dimension =====
+  // 維度代碼：
+  // C = 關愛程度（情感支持）
+  // D = 紀律與規範（管教嚴格度）
+  // O = 溝通方式（開放 vs 封閉）(O=Open)
+  // E = 父母期望與壓力感（高期待 vs 低期待）
+  const QUESTIONS = [
+    // 關愛 C (1-8)
+    { id: 1, dimension: "C", text: "我遇到困難時，父母會安慰我，讓我感到安心。" },
+    { id: 2, dimension: "C", text: "父母常鼓勵我嘗試新事物，給我加油打氣。" },
+    { id: 3, dimension: "C", text: "父母會關注我的心情，如果我不開心他們會想辦法安撫我。" },
+    { id: 4, dimension: "C", text: "我覺得父母經常對我表現出理解和溫暖。" },
+    { id: 5, dimension: "C", text: "父母在我完成事情時會稱讚我的努力。" },
+    { id: 6, dimension: "C", text: "我覺得父母對我的問題很在意，會耐心傾聽。" },
+    { id: 7, dimension: "C", text: "父母經常花時間陪伴我，一起聊天或玩耍。" },
+    { id: 8, dimension: "C", text: "父母會讓我知道他們無條件地愛我。" },
+
+    // 紀律 D (9-16)
+    { id: 9,  dimension: "D", text: "父母對我的行為有明確的要求和規範。" },
+    { id: 10, dimension: "D", text: "如果我違反家規，父母會嚴肅地糾正我。" },
+    { id: 11, dimension: "D", text: "父母對我的學習成績期望很高，會督促我努力。" },
+    { id: 12, dimension: "D", text: "父母會因為我犯錯而對我進行懲戒或訓斥。" },
+    { id: 13, dimension: "D", text: "父母常提醒我要遵守規則並按時完成該完成的事情。" },
+    { id: 14, dimension: "D", text: "父母對我做錯事的態度比較嚴厲，讓我感到壓力。" },
+    { id: 15, dimension: "D", text: "家裡有很多必須遵守的規定，父母會確保我都遵守。" },
+    { id: 16, dimension: "D", text: "父母對我的要求很嚴格，不容易讓我自由做決定。" },
+
+    // 溝通 O (17-24)
+    { id: 17, dimension: "O", text: "父母會耐心聽我說話，即使我說的話題很瑣碎。" },
+    { id: 18, dimension: "O", text: "當我遇到問題想求助時，父母願意和我談談解決辦法。" },
+    { id: 19, dimension: "O", text: "父母會尊重我的想法，不會隨便打斷我。" },
+    { id: 20, dimension: "O", text: "父母願意與我開放地交流，不會對我隱瞞事情。" },
+    { id: 21, dimension: "O", text: "即使我做錯事，父母也願意聽我解釋原因。" },
+    { id: 22, dimension: "O", text: "我覺得在家裡，我可以向父母坦白我的心事。" },
+    { id: 23, dimension: "O", text: "父母經常詢問我的想法，讓我參與家庭決策。" },
+    { id: 24, dimension: "O", text: "父母和我之間的對話通常是平等而開放的。" },
+
+    // 期待 E (25-32)
+    { id: 25, dimension: "E", text: "父母對我的未來成就期望很高，希望我在學業上表現優異。" },
+    { id: 26, dimension: "E", text: "父母經常督促我要達到更高的標準，並給我明確的期望。" },
+    { id: 27, dimension: "E", text: "父母為了我的未來投入很多心力，安排了許多課外學習活動。" },
+    { id: 28, dimension: "E", text: "父母對我的成績要求非常嚴格，希望我比同學更出色。" },
+    { id: 29, dimension: "E", text: "父母總是告訴我要努力學習，以符合他們對我的期待。" },
+    { id: 30, dimension: "E", text: "父母在選擇學校或規劃生涯方面對我有很多具體期望。" },
+    { id: 31, dimension: "E", text: "父母對我設定的標準很高，希望我達到優秀的表現。" },
+    { id: 32, dimension: "E", text: "父母對我的生活和事業有很高的規劃與期望。" },
+  ];
+
+  const DIM_LABEL = {
+    C: "關愛程度（情感支持）",
+    D: "紀律與規範（管教嚴格度）",
+    O: "溝通方式（開放程度）",
+    E: "父母期望與壓力感（期待程度）",
+  };
+
+  // ===== 2) 16 型描述（用你給的內容）=====
+  // key = C? D? O? E?  (H/L)
+  const TYPE_INFO = {
+    "L L L L": { name: "忽視型", desc: "父母關愛與參與度均低，不常管教也不善溝通，對孩子期望有限。孩子基本需求無虞，但情感支持欠缺，容易缺乏安全感。研究指出此類「放任/忽視式」教養下，孩子往往發展出自制力和自尊較低的特質。" },
+    "L L L H": { name: "苛求型", desc: "父母表面冷漠，但對孩子有很高期望，不常陪伴也較少耐心溝通。孩子雖然被要求高成就，卻缺乏情感支持，容易感到焦慮與壓力。此類型近似「高要求但低溫暖」，可能使孩子表現服從，但快樂度和自尊不足。" },
+    "L L H L": { name: "友伴型", desc: "父母比較沒有管教規範，也缺少深度關愛，但與孩子關係像朋友般開放溝通。由於期望不高，孩子自由度大，但可能缺乏明確引導。此類型孩子可能獨立性較強，但由於父母情感投入少，也可能較缺安全感。" },
+    "L L H H": { name: "空談型", desc: "父母願意與孩子多交流，但缺乏真誠關愛或紀律管束，卻對孩子抱持高標準。孩子往往聽到許多建議卻感受不到溫暖，可能容易對親情產生矛盾感，表面關係良好但內心未必踏實。" },
+
+    "L H L L": { name: "嚴格型", desc: "父母制定許多規矩和懲罰措施，但關愛和溝通都比較少，期望反而中等偏低。孩子需遵守嚴苛的規範，但得不到情感支持，也感受不到父母對成就的鼓勵或期待，可能較膽小服從，但內在動力不足。" },
+    "L H L H": { name: "虎爸型", desc: "父母管教嚴格、要求高，但不常表達愛與理解，也較少傾聽孩子意見。這是典型的「專制型」，孩子可能非常服從；研究顯示這類教養下孩子的快樂度、社交能力和自尊心通常都偏低。" },
+    "L H H L": { name: "威權型", desc: "父母同樣管教嚴謹，但相對願意與孩子溝通，期望中等。孩子習慣在嚴格規範中生活，雖有一定自主空間（因為溝通頻繁），但由於父母情感表達不足，孩子情緒上仍可能較內斂。" },
+    "L H H H": { name: "權威型", desc: "父母管教嚴格、溝通也很多，對孩子要求最高，但關愛投入不多。孩子處於高壓環境下可能能力突出（因為訓練有素），但同時可能會因缺乏溫暖而缺乏安全感。" },
+
+    "H L L L": { name: "放任型", desc: "父母非常疼愛孩子，但不設限規矩，和孩子相處時也不太深入交流，對孩子要求不高。生活壓力低，但因規範缺乏自律性較弱，習慣自由成長。研究發現，過度寬鬆教養下孩子快樂度可能較高，但自我管理和守規能力相對較低。" },
+    "H L L H": { name: "寵溺型", desc: "父母呵護有加，不設太多規矩，也不常深入溝通，卻對孩子有很高成就期待。孩子在「被保護又被期待」的矛盾中成長，可能表面享受寵愛但心理壓力不小；若無嚴格管教，孩子可能以達到父母期望為主觀動機，而缺乏內在動力。" },
+    "H L H L": { name: "園丁型", desc: "父母像園丁般提供良好成長土壤：愛多於嚴管，溝通開放但期望不高。孩子在自由而被理解的環境中探索世界，逐漸建立自信與創造力。此類通常培養出獨立、好奇的孩子，長大後自尊心較強。" },
+    "H L H H": { name: "引導型", desc: "父母充滿關愛並常與孩子交流，同時對孩子抱有高期待。孩子在充滿支持的同時也會為達標努力，常常是成績和品格兼優。這種風格介於民主與溺愛之間，孩子多能在鼓勵下快樂成長並養成責任感。" },
+
+    "H H L L": { name: "傳統型", desc: "父母既給予溫暖又嚴格管教，但較少與孩子溝通，對孩子要求適中。孩子能在明確規則中成長並受到關懷，但由於交流不多，可能較少分享內心想法。通常會依賴家庭規範行事，也較尊重父母。" },
+    "H H L H": { name: "嚴父型", desc: "父母既愛孩子又嚴格要求，常以行為規範和高標準來表達關心，但不太開放溝通。孩子習慣在高標準下努力，經常想取悅父母；由於缺少開放溝通，情感上可能不易表達自己的壓力。" },
+    "H H H L": { name: "教練型", desc: "父母充滿愛心且善於交流，也制定嚴格規範，但對孩子期望相對低一些。父母像教練一樣，既給予指導又鼓勵孩子自由發揮。孩子能從關愛與規範中穩健成長，安全感與自信心強，學習動力多來自內在。" },
+    "H H H H": { name: "名師型", desc: "父母如同「名師」，愛與規範兼備，與孩子開放溝通並對其有極高期待。此類兼顧愛與界線的教養（Authoritative）往往培育出快樂、有能力、較成功的孩子；自信與責任感較佳，心理發展多面向均衡。" },
+  };
+
+  // ===== 3) DOM =====
+  const screenStart  = document.getElementById("screenStart");
+  const screenQuiz   = document.getElementById("screenQuiz");
+  const screenResult = document.getElementById("screenResult");
+
+  const btnStart = document.getElementById("btnStart");
+  const btnPrev = document.getElementById("btnPrev");
+  const btnNext = document.getElementById("btnNext");
+  const btnSubmit = document.getElementById("btnSubmit");
+  const warn = document.getElementById("warn");
+
+  const qNo = document.getElementById("qNo");
+  const qText = document.getElementById("qText");
+  const pillProgress = document.getElementById("pillProgress");
+  const barFill = document.getElementById("barFill");
+  const scale = document.getElementById("scale");
+
+  const scoreRows = document.getElementById("scoreRows");
+  const typeKey = document.getElementById("typeKey");
+  const typeName = document.getElementById("typeName");
+  const typeDesc = document.getElementById("typeDesc");
+  const midNote = document.getElementById("midNote");
+
+  const btnRestart = document.getElementById("btnRestart");
+  const btnCopy = document.getElementById("btnCopy");
+  const copyText = document.getElementById("copyText");
+
+  // ===== 4) 測驗狀態 =====
+  let items = [];              // 已洗牌題目
+  let idx = 0;                 // 目前題號 index
+  let answers = new Map();     // question.id -> 1..7
+
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function showScreen(which) {
+    screenStart.style.display  = which === "start"  ? "" : "none";
+    screenQuiz.style.display   = which === "quiz"   ? "" : "none";
+    screenResult.style.display = which === "result" ? "" : "none";
+  }
+
+  function renderScale(selected) {
+    scale.innerHTML = "";
+    for (let v = 1; v <= 7; v++) {
+      const div = document.createElement("div");
+      div.className = "opt" + (selected === v ? " selected" : "");
+      div.textContent = v;
+      div.onclick = () => {
+        answers.set(items[idx].id, v);
+        renderQuestion();
+      };
+      scale.appendChild(div);
+    }
+  }
+
+  function renderQuestion() {
+    const total = items.length;
+    const item = items[idx];
+    const selected = answers.get(item.id);
+
+    qNo.textContent = `第 ${idx + 1} 題`;
+    qText.textContent = item.text;
+    pillProgress.textContent = `${idx + 1} / ${total}`;
+    barFill.style.width = `${Math.round(((idx + 1) / total) * 100)}%`;
+
+    renderScale(selected);
+
+    btnPrev.disabled = idx === 0;
+    btnNext.disabled = idx === total - 1;
+
+    const doneCount = answers.size;
+    btnSubmit.disabled = doneCount !== total;
+
+    warn.style.display = "none";
+  }
+
+  function goNext() {
+    const item = items[idx];
+    if (!answers.has(item.id)) {
+      warn.style.display = "";
+      return;
+    }
+    if (idx < items.length - 1) idx++;
+    renderQuestion();
+  }
+
+  function goPrev() {
+    if (idx > 0) idx--;
+    renderQuestion();
+  }
+
+  // ===== 5) 分數與分類 =====
+  function level(score) {
+    if (score <= 23) return "低";
+    if (score <= 40) return "中";
+    return "高";
+  }
+
+  // 16 型需要高/低：若等級=中，用 32 二分（>=32 高，否則低）
+  function hiLo(score) {
+    const lv = level(score);
+    if (lv === "高") return { hl: "H", lv };
+    if (lv === "低") return { hl: "L", lv };
+    return { hl: score >= 32 ? "H" : "L", lv: "中" };
+  }
+
+  function calcScores() {
+    const sums = { C: 0, D: 0, O: 0, E: 0 };
+    const counts = { C: 0, D: 0, O: 0, E: 0 };
+
+    for (const q of items) {
+      const v = answers.get(q.id);
+      if (typeof v !== "number") continue;
+      sums[q.dimension] += v;
+      counts[q.dimension] += 1;
+    }
+    return { sums, counts };
+  }
+
+  function buildResult() {
+    const { sums } = calcScores();
+
+    // 表格
+    scoreRows.innerHTML = "";
+    const dims = ["C","D","O","E"];
+    const midDims = [];
+
+    for (const d of dims) {
+      const tr = document.createElement("tr");
+      const sc = sums[d];
+      const lv = level(sc);
+      if (lv === "中") midDims.push(`${DIM_LABEL[d]}（${sc} 分）`);
+
+      tr.innerHTML = `
+        <td>${DIM_LABEL[d]}</td>
+        <td><b>${sc}</b></td>
+        <td>${lv}</td>
+      `;
+      scoreRows.appendChild(tr);
+    }
+
+    // 16 型
+    const c = hiLo(sums.C);
+    const d = hiLo(sums.D);
+    const o = hiLo(sums.O);
+    const e = hiLo(sums.E);
+
+    const key = `${c.hl} ${d.hl} ${o.hl} ${e.hl}`
+      .replaceAll("H","H")
+      .replaceAll("L","L");
+
+    const lookupKey = key.replaceAll("H","H").replaceAll("L","L")
+      .replace(/H/g,"H").replace(/L/g,"L"); // keep
+
+    // TYPE_INFO 使用 "H/L" 字串，但我定義的 key 是 "L L L L" 這種
+    const prettyKey = `${c.hl} ${d.hl} ${o.hl} ${e.hl}`.replaceAll("H","H").replaceAll("L","L");
+    const info = TYPE_INFO[prettyKey] || { name: "未定義型", desc: "找不到對應的類型描述（請檢查 TYPE_INFO key 是否完整）。" };
+
+    typeKey.textContent = `四向度高低組合：${prettyKey}（C/D/O/E）`;
+    typeName.textContent = info.name;
+    typeDesc.textContent = info.desc;
+
+    if (midDims.length) {
+      midNote.innerHTML = `
+        <b>提示：</b>以下面向落在「中」等級，因此在 16 型（二分法）時使用 32 分作切分（≥32 視為高）：
+        <br/>• ${midDims.join("<br/>• ")}
+      `;
+    } else {
+      midNote.textContent = "";
+    }
+
+    // 複製文字
+    const text =
+`【家庭教養風格測驗結果】
+- 關愛程度 C：${sums.C}（${level(sums.C)}）
+- 紀律與規範 D：${sums.D}（${level(sums.D)}）
+- 溝通方式 O：${sums.O}（${level(sums.O)}）
+- 期待與壓力 E：${sums.E}（${level(sums.E)}）
+
+【16型判定（高/低組合：C/D/O/E）】
+- 組合：${prettyKey}
+- 類型：${info.name}
+- 說明：${info.desc}
+
+註：等級低=8–23，中=24–40，高=41–56；若等級為「中」，16型二分法以 32 分作切分（≥32 高）。`;
+    copyText.textContent = text;
+  }
+
+  // ===== 6) 流程控制 =====
+  function startQuiz() {
+    items = shuffle(QUESTIONS);
+    answers = new Map();
+    idx = 0;
+    showScreen("quiz");
+    renderQuestion();
+  }
+
+  function finishQuiz() {
+    buildResult();
+    showScreen("result");
+  }
+
+  // ===== 7) 綁事件 =====
+  btnStart.onclick = startQuiz;
+  btnPrev.onclick = goPrev;
+  btnNext.onclick = goNext;
+  btnSubmit.onclick = finishQuiz;
+
+  btnRestart.onclick = () => {
+    showScreen("start");
+  };
+
+  btnCopy.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(copyText.textContent);
+      btnCopy.textContent = "已複製 ✅";
+      setTimeout(() => (btnCopy.textContent = "複製結果文字"), 1200);
+    } catch (e) {
+      // fallback
+      const ta = document.createElement("textarea");
+      ta.value = copyText.textContent;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      btnCopy.textContent = "已複製 ✅";
+      setTimeout(() => (btnCopy.textContent = "複製結果文字"), 1200);
+    }
+  };
+})();
+</script>
+</body>
+</html>
